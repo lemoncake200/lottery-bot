@@ -257,8 +257,7 @@ class Lotto645:
                 })
 
             if len(winnings) == 1:
-                print(winnings)
-                print(result_data)
+                raise
                 return result_data
 
             result_data = {
