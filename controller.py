@@ -83,10 +83,10 @@ def buy():
     response = buy_lotto645(globalAuthCtrl, count, mode, selected_numbers) 
     send_message(1, 0, response=response, webhook_url=discord_webhook_url)
 
-    time.sleep(10)
+    # time.sleep(10)
 
-    response = buy_win720(globalAuthCtrl, username) 
-    send_message(1, 1, response=response, webhook_url=discord_webhook_url)
+    # response = buy_win720(globalAuthCtrl, username) 
+    # send_message(1, 1, response=response, webhook_url=discord_webhook_url)
 
 def run():
     if len(sys.argv) < 2:
