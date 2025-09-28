@@ -18,7 +18,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Run Scripts
-        run: echo $DISCORD_WEBHOOK_URL | make check
+        run: make check
         env:
           USERNAME: ${{ secrets.USERNAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
