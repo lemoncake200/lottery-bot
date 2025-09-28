@@ -9,10 +9,10 @@ import notification
 import time
 
 
-def buy_lotto645(authCtrl: auth.AuthController, cnt: int, mode: str):
+def buy_lotto645(authCtrl: auth.AuthController, cnt: int, mode: str, selected_numbers: list):
     lotto = lotto645.Lotto645()
     _mode = lotto645.Lotto645Mode[mode.upper()]
-    response = lotto.buy_lotto645(authCtrl, cnt, _mode)
+    response = lotto.buy_lotto645(authCtrl, cnt, _mode, selected_numbers)
     response['balance'] = lotto.get_balance(auth_ctrl=authCtrl)
     return response
 
