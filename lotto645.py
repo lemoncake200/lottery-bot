@@ -42,7 +42,8 @@ class Lotto645:
         self, 
         auth_ctrl: auth.AuthController, 
         cnt: int, 
-        mode: Lotto645Mode
+        mode: Lotto645Mode,
+		selected_numbers: list
     ) -> dict:
         assert type(auth_ctrl) == auth.AuthController
         assert type(cnt) == int and 1 <= cnt <= 5
@@ -54,7 +55,7 @@ class Lotto645:
         data = (
             self._generate_body_for_auto_mode(cnt, requirements)
             if mode == Lotto645Mode.AUTO
-            else self._generate_body_for_manual(cnt)
+            else self._generate_body_for_manual(cnt, selected_numbers, requirements)
         )
 
         body = self._try_buying(headers, data)
@@ -93,10 +94,35 @@ class Lotto645:
             "gameCnt": cnt
         }
 
-    def _generate_body_for_manual(self, cnt: int) -> dict:
-        assert type(cnt) == int and 1 <= cnt <= 5
-
-        raise NotImplementedError()
+    def _generate_body_for_manual(self, cnt: int, selected_numbers: list, requirements: list) -> dict:
+	    assert type(cnt) == int and 1 <= cnt <= 5
+	    assert type(selected_numbers) == list and len(selected_numbers) == cnt
+	    SLOTS = ["A", "B", "C", "D", "E"]
+	
+	    # Each arrGameChoiceNum must be a string of 6 two-digit numbers, comma-separated
+	    def format_nums(nums):
+	        assert len(nums) == 6
+	        # zero-pad to two digits
+	        return ",".join(f"{int(n):02d}" for n in nums)
+	
+	    param = [
+	        {
+	            "genType": "1",  # manual
+	            "arrGameChoiceNum": format_nums(selected_numbers[i]),
+	            "alpabet": SLOTS[i]
+	        }
+	        for i in range(cnt)
+	    ]
+	
+	    return {
+	        "round": self._get_round(),
+	        "direct": requirements[0],
+	        "nBuyAmount": str(1000 * cnt),
+	        "param": json.dumps(param),
+	        "ROUND_DRAW_DATE": requirements[1],
+	        "WAMT_PAY_TLMT_END_DT": requirements[2],
+	        "gameCnt": cnt
+	    }
 
     def _getRequirements(self, headers: dict) -> list: 
         org_headers = headers.copy()
