@@ -1,5 +1,6 @@
 import copy
 import requests
+from bs4 import BeautifulSoup as BS
 from HttpClient import HttpClientSingleton
 
 class AuthController:
@@ -31,17 +32,24 @@ class AuthController:
         assert type(user_id) == str
         assert type(password) == str
 
-        default_auth_cred = (
-            self._get_default_auth_cred()
-        )  # JSessionId 값을 받아온 후, 그 값에 인증을 씌우는 방식
+        # 1. Get a pre-login JSESSIONID
+        pre_login_jsessionid = self._get_default_auth_cred()
 
-        headers = self._generate_req_headers(default_auth_cred)
-
+        # 2. Try to login with the pre-login JSESSIONID
+        headers = self._generate_req_headers(pre_login_jsessionid)
         data = self._generate_body(user_id, password)
+        login_res = self._send_login_request(headers, data)
 
-        _res = self._try_login(headers, data)  # 새로운 값의 JSESSIONID가 내려오는데, 이 값으론 로그인 안됨
+        # 3. Get the post-login JSESSIONID from the login response
+        post_login_jsessionid = self._get_j_session_id_from_response(login_res)
 
-        self._update_auth_cred(default_auth_cred)
+        # 4. Verify login success with the post-login JSESSIONID
+        if not self._verify_login_success(post_login_jsessionid):
+            raise Exception("Login failed. Please check your username and password.")
+
+        # 5. Set the auth credential
+        self._set_auth_cred(post_login_jsessionid)
+
 
     def add_auth_cred_to_headers(self, headers: dict) -> str:
         assert type(headers) == dict
@@ -85,7 +93,7 @@ class AuthController:
             "newsEventYn": "",
         }
 
-    def _try_login(self, headers: dict, data: dict):
+    def _send_login_request(self, headers: dict, data: dict):
         assert type(headers) == dict
         assert type(data) == dict
 
@@ -96,10 +104,22 @@ class AuthController:
         )
         return res
 
-    def _update_auth_cred(self, j_session_id: str) -> None:
+    def _verify_login_success(self, j_session_id: str) -> bool:
         assert type(j_session_id) == str
 
-        # TODO: judge whether login is success or not
-        # 로그인 실패해도 jsession 값이 갱신되기 때문에, 마이페이지 방문 등으로 판단해야 할 듯
-        # + 비번 5번 틀렸을 경우엔 비번 정확해도 로그인 실패함
+        headers = self._generate_req_headers(j_session_id)
+        res = self.http_client.post(
+            url="https://dhlottery.co.kr/userSsl.do?method=myPage",
+            headers=headers
+        )
+
+        html = res.text
+        soup = BS(html, "html5lib")
+
+        # Check for a specific element that only appears when logged in
+        balance_element = soup.find("p", class_="total_new")
+        return balance_element is not None
+
+    def _set_auth_cred(self, j_session_id: str) -> None:
+        assert type(j_session_id) == str
         self._AUTH_CRED = j_session_id

@@ -54,8 +54,12 @@ def check():
     slack_webhook_url = os.environ.get('SLACK_WEBHOOK_URL') 
     discord_webhook_url = os.environ.get('DISCORD_WEBHOOK_URL')
 
-    globalAuthCtrl = auth.AuthController()
-    globalAuthCtrl.login(username, password)
+    try:
+        globalAuthCtrl = auth.AuthController()
+        globalAuthCtrl.login(username, password)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
     
     response = check_winning_lotto645(globalAuthCtrl)
     send_message(0, 0, response=response, webhook_url=discord_webhook_url)
@@ -77,8 +81,12 @@ def buy():
     mode = os.environ.get('MODE')
     selected_numbers = os.environ.get('MANUAL_NUMBERS')
 
-    globalAuthCtrl = auth.AuthController()
-    globalAuthCtrl.login(username, password)
+    try:
+        globalAuthCtrl = auth.AuthController()
+        globalAuthCtrl.login(username, password)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
 
     response = buy_lotto645(globalAuthCtrl, count, mode, selected_numbers) 
     send_message(1, 0, response=response, webhook_url=discord_webhook_url)
